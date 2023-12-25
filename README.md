@@ -1,7 +1,7 @@
 # uNote
 
 ## Description
-App that allows users to create, modify and delete notes. These notes have a title, a body and a color. This app also allows users to create directories which can be useful to organize notes. The directories can include other directories too.
+App that allows users to create, modify and delete notes. These notes have a title, a body and a color. This app also allows users to create directories which can be useful to organize notes. The directories can include other directories too. Furthermore, the notes can be commented by different users.
 
 ## Entities
 1. User
@@ -18,7 +18,11 @@ App that allows users to create, modify and delete notes. These notes have a tit
     - Body
     - Color
 
-3. Directory
+3. Comment
+    - ID
+    - Body
+
+5. Directory
     - ID
     - Title
 
