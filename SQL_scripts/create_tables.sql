@@ -35,6 +35,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+-- Trigger before insert on Directories
 CREATE TRIGGER trigger_default_directory_name
 BEFORE INSERT ON directories
 FOR EACH ROW
