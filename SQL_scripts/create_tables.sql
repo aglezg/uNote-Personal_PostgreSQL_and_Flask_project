@@ -16,14 +16,15 @@ CREATE TABLE users (
         password ~ '[0-9]' AND
         password ~ '[!@#$%^&*(),.?":{}|<>]'
   ),
-  registration_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP CHECK (registration_date >= CURRENT_DATE)
+  registration_date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP CHECK (registration_date >= CURRENT_DATE)
 );
 
 -- Directories
 CREATE TABLE directories (
   id SERIAL PRIMARY KEY,
   name VARCHAR(150) NOT NULL,
-  owner_id INT REFERENCES users(id) ON UPDATE CASCADE ON DELETE CASCADE
+  owner_id INT NOT NULL REFERENCES users(id) ON UPDATE CASCADE ON DELETE CASCADE,
+  parent_directory_id INT REFERENCES directories(id) ON UPDATE CASCADE ON DELETE CASCADE
 );
 
 -- Function to set a default name to a directory
@@ -44,7 +45,7 @@ EXECUTE FUNCTION set_default_directory_name();
 -- Notes
 CREATE TABLE notes (
   id SERIAL PRIMARY KEY,
-  title VARCHAR(255) DEFAULT 'No title',
+  title VARCHAR(255) NOT NULL DEFAULT 'No title',
   body TEXT,
   color VARCHAR(10) NOT NULL CHECK (
     color in (
@@ -61,14 +62,14 @@ CREATE TABLE notes (
       'Pink'
     )
   ),
-  owner_id INT REFERENCES users(id) ON UPDATE CASCADE ON DELETE CASCADE,
-  directory_id INT REFERENCES directories(id) ON UPDATE CASCADE ON DELETE CASCADE
+  owner_id INT NOT NULL REFERENCES users(id) ON UPDATE CASCADE ON DELETE CASCADE,
+  directory_id INT NOT NULL REFERENCES directories(id) ON UPDATE CASCADE ON DELETE CASCADE
 );
 
 -- Comments
 CREATE TABLE comments (
   id SERIAL PRIMARY KEY,
   body TEXT NOT NULL,
-  id_note INT REFERENCES notes(id) ON UPDATE CASCADE ON DELETE CASCADE,
-  owner_id INT REFERENCES users(id) ON UPDATE CASCADE ON DELETE CASCADE
+  id_note INT NOT NULL REFERENCES notes(id) ON UPDATE CASCADE ON DELETE CASCADE,
+  owner_id INT NOT NULL REFERENCES users(id) ON UPDATE CASCADE ON DELETE CASCADE
 );
