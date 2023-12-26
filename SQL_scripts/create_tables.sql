@@ -16,7 +16,7 @@ CREATE TABLE users (
         password ~ '[0-9]' AND
         password ~ '[!@#$%^&*(),.?":{}|<>]'
   ),
-  registration_date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP CHECK (registration_date >= CURRENT_DATE)
+  registration_date TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP CHECK (registration_date >= CURRENT_DATE)
 );
 
 -- Directories
@@ -27,20 +27,42 @@ CREATE TABLE directories (
   parent_directory_id INT REFERENCES directories(id) ON UPDATE CASCADE ON DELETE CASCADE
 );
 
--- Function to set a default name to a directory
-CREATE OR REPLACE FUNCTION set_default_directory_name() RETURNS TRIGGER AS $$
+-- Function to set a default name to a directory if it is a root directory
+CREATE OR REPLACE FUNCTION set_default_root_directory_name() RETURNS TRIGGER AS $$
 BEGIN
-  -- Set default directory name
-  NEW.name = 'directory_(' || id || ')';
+  -- Set default directory name to 'root'
+  IF NOT EXISTS (SELECT 1 FROM directories WHERE owner_id = NEW.owner_id) THEN
+    IF NEW.parent_directory_id IS NULL THEN
+      NEW.name = 'root_user(' || NEW.owner_id || ')';
+    ELSE
+      RAISE EXCEPTION 'root directory cannot has parent directory id associated';
+    END IF;
+  END IF;
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
 
 -- Trigger before insert on Directories
-CREATE TRIGGER trigger_default_directory_name
+CREATE TRIGGER trigger_default_root_directory_name
 BEFORE INSERT ON directories
 FOR EACH ROW
-EXECUTE FUNCTION set_default_directory_name();
+EXECUTE FUNCTION set_default_root_directory_name();
+
+-- Function to check if a user can only has one root directory
+CREATE OR REPLACE FUNCTION one_user_one_root_directory() RETURNS TRIGGER AS $$
+BEGIN
+  IF NEW.parent_directory_id IS NULL AND EXISTS (SELECT 1 FROM directories WHERE owner_id = NEW.owner_id) THEN
+    RAISE EXCEPTION 'only one root directory per user can exist';
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Trigger before insert on Directories
+CREATE TRIGGER trigger_one_user_one_root_directory
+BEFORE INSERT OR UPDATE ON directories
+FOR EACH ROW
+EXECUTE FUNCTION one_user_one_root_directory();
 
 -- Notes
 CREATE TABLE notes (
